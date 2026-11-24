@@ -95,4 +95,30 @@ describe('importacion de preguntas', () => {
     }));
     await assert.rejects(() => activities.importQuestions(activity, muchas), /demasiadas/);
   });
+
+  it('la plantilla que se le ofrece al docente se puede importar tal cual', async () => {
+    const activity = await sala();
+    const { imported } = await activities.importQuestions(activity, bundle.QUESTION_BUNDLE_TEMPLATE);
+    assert.equal(imported, 3);
+    assert.deepEqual(
+      activity.questions.map((q) => q.type),
+      ['open', 'multiple', 'boolean'],
+    );
+  });
+
+  it('el banco exportado se vuelve a importar sin tocarlo', async () => {
+    const origen = await sala();
+    await activities.importQuestions(origen, bundle.QUESTION_BUNDLE_TEMPLATE);
+    const snapshot = await activities.getAdminSnapshot(origen);
+
+    const destino = await sala();
+    const { imported } = await activities.importQuestions(destino, bundle.bundleFromQuestions(snapshot.questions));
+
+    assert.equal(imported, snapshot.questions.length);
+    const copia = await activities.getAdminSnapshot(destino);
+    assert.deepEqual(
+      copia.questions.map((q) => [q.type, q.prompt, q.points, q.correctOptionKey]),
+      snapshot.questions.map((q) => [q.type, q.prompt, q.points, q.correctOptionKey]),
+    );
+  });
 });

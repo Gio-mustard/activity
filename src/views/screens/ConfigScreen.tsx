@@ -15,6 +15,7 @@ import { AdminTabs } from '@/views/components/adminNav';
 import { AppFooter, AppHeader, Page } from '@/views/components/brand';
 import { QuestionForm } from '@/views/components/QuestionForm';
 import { QuestionImport } from '@/views/components/QuestionImport';
+import { QuestionTemplate } from '@/views/components/QuestionTemplate';
 import { QrPoster, TeamQrBoard } from '@/views/components/Qr';
 import { TeamCard, type TeamPatch } from '@/views/components/TeamCard';
 import { Button, Card, EmptyState, NumberStepper, Pill, SectionTitle, Toast, cx } from '@/views/components/ui';
@@ -307,6 +308,7 @@ function ConfigBody({ code, adminCode }: { code: string; adminCode: string }) {
         {jsonOpen ? (
           <div className="mb-space-md grid gap-space-md lg:grid-cols-2">
             <QuestionImport busy={saving} onImport={importQuestionBundle} />
+            <QuestionTemplate code={code} questions={snapshot.questions} />
           </div>
         ) : null}
 
