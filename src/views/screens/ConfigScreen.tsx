@@ -14,7 +14,7 @@ import { AdminGate } from '@/views/components/AdminGate';
 import { AdminTabs } from '@/views/components/adminNav';
 import { AppFooter, AppHeader, Page } from '@/views/components/brand';
 import { QuestionForm } from '@/views/components/QuestionForm';
-import { QrPoster } from '@/views/components/Qr';
+import { QrPoster, TeamQrBoard } from '@/views/components/Qr';
 import { TeamCard, type TeamPatch } from '@/views/components/TeamCard';
 import { Button, Card, EmptyState, NumberStepper, Pill, SectionTitle, Toast, cx } from '@/views/components/ui';
 import { Icon } from '@/lib/icons';
@@ -34,6 +34,7 @@ function ConfigBody({ code, adminCode }: { code: string; adminCode: string }) {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [showQr, setShowQr] = useState(false);
+  const [showTeamQr, setShowTeamQr] = useState(false);
   /*
    * El codigo de administrador nace tapado: esta pantalla se proyecta en
    * clase y con el a la vista cualquier alumno abre la consola del docente.
@@ -173,7 +174,7 @@ function ConfigBody({ code, adminCode }: { code: string; adminCode: string }) {
                 <p className="truncate font-mono text-headline-sm">{url}</p>
               </div>
             </div>
-            <div className="flex w-full gap-2 sm:w-auto">
+            <div className="flex w-full flex-wrap gap-2 sm:w-auto">
               <Button
                 className="flex-1 sm:flex-none"
                 icon={copied ? 'check' : 'copy'}
@@ -188,6 +189,14 @@ function ConfigBody({ code, adminCode }: { code: string; adminCode: string }) {
               </Button>
               <Button className="flex-1 sm:flex-none" icon="qr" onClick={() => setShowQr(true)}>
                 Ver QR gigante
+              </Button>
+              <Button
+                className="flex-1 sm:flex-none"
+                icon="users"
+                disabled={snapshot.teams.length === 0}
+                onClick={() => setShowTeamQr(true)}
+              >
+                QR por equipo
               </Button>
             </div>
           </div>
@@ -335,6 +344,7 @@ function ConfigBody({ code, adminCode }: { code: string; adminCode: string }) {
 
       <AppFooter />
       {showQr ? <QrPoster url={url} code={code} onClose={() => setShowQr(false)} /> : null}
+      {showTeamQr ? <TeamQrBoard teams={snapshot.teams} onClose={() => setShowTeamQr(false)} /> : null}
       {error ? <Toast message={error} onClose={() => setError(null)} /> : null}
     </>
   );
