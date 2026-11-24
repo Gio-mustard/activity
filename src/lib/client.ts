@@ -38,47 +38,81 @@ export function adminHeaders(adminCode: string): HeadersInit {
 const identityKey = (code: string) => `amai:identity:${code.toUpperCase()}`;
 const adminKey = (code: string) => `amai:admin:${code.toUpperCase()}`;
 
-export function saveIdentity(identity: ParticipantIdentity) {
+/*
+ * Respaldo en memoria.
+ *
+ * Safari en navegacion privada (y cualquier navegador con el almacenamiento
+ * bloqueado) deja que `setItem` lance. Antes eso se tragaba en silencio y el
+ * alumno quedaba atrapado: el servidor ya lo habia registrado, pero la
+ * pantalla del pulsador no encontraba su identidad y lo devolvia al
+ * formulario; al reintentar, el servidor le respondia que su propio nombre ya
+ * estaba ocupado por el asiento fantasma que acababa de crear.
+ *
+ * El respaldo vive lo que vive la pestaña, que es justo lo que dura la clase.
+ */
+const memoria = new Map<string, string>();
+let persistente = true;
+
+/** False si el navegador no logra guardar: al recargar se pierde el lugar. */
+export function identityIsPersistent(): boolean {
+  return persistente;
+}
+
+function escribir(key: string, value: string) {
+  memoria.set(key, value);
   try {
-    localStorage.setItem(identityKey(identity.activityCode), JSON.stringify(identity));
+    localStorage.setItem(key, value);
   } catch {
-    /* modo privado o almacenamiento lleno: se sigue sin persistir */
+    persistente = false;
   }
 }
 
-export function loadIdentity(code: string): ParticipantIdentity | null {
+function leer(key: string): string | null {
+  const enMemoria = memoria.get(key);
+  if (enMemoria !== undefined) return enMemoria;
   try {
-    const raw = localStorage.getItem(identityKey(code));
-    return raw ? (JSON.parse(raw) as ParticipantIdentity) : null;
+    return localStorage.getItem(key);
+  } catch {
+    persistente = false;
+    return null;
+  }
+}
+
+function borrar(key: string) {
+  memoria.delete(key);
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    /* noop */
+  }
+}
+
+export function saveIdentity(identity: ParticipantIdentity) {
+  escribir(identityKey(identity.activityCode), JSON.stringify(identity));
+}
+
+export function loadIdentity(code: string): ParticipantIdentity | null {
+  const raw = leer(identityKey(code));
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as ParticipantIdentity;
   } catch {
     return null;
   }
 }
 
 export function clearIdentity(code: string) {
-  try {
-    localStorage.removeItem(identityKey(code));
-  } catch {
-    /* noop */
-  }
+  borrar(identityKey(code));
 }
 
 /* ---------------- Codigo de administrador ---------------- */
 
 export function saveAdminCode(code: string, adminCode: string) {
-  try {
-    localStorage.setItem(adminKey(code), adminCode);
-  } catch {
-    /* noop */
-  }
+  escribir(adminKey(code), adminCode);
 }
 
 export function loadAdminCode(code: string): string | null {
-  try {
-    return localStorage.getItem(adminKey(code));
-  } catch {
-    return null;
-  }
+  return leer(adminKey(code));
 }
 
 /** Lista de salas que este navegador administra, para la pantalla de inicio. */

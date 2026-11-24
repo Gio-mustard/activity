@@ -14,7 +14,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AvatarIcon, Icon } from '@/lib/icons';
 import { teamColor } from '@/lib/teams';
-import { clearIdentity, loadIdentity } from '@/lib/client';
+import { clearIdentity, identityIsPersistent, loadIdentity } from '@/lib/client';
 import { formatClock, formatReaction } from '@/controllers/rules';
 import { useLiveRoom } from '@/realtime/useLiveRoom';
 import { CountdownBar } from '@/views/components/Countdown';
@@ -26,20 +26,41 @@ export function BuzzerScreen({ code }: { code: string }) {
   const [identity, setIdentity] = useState<ParticipantIdentity | null>(null);
   const [checked, setChecked] = useState(false);
 
+  /*
+   * Se marca `checked` pase lo que pase.
+   *
+   * Antes, si no habia identidad se disparaba la redireccion y se salia sin
+   * marcar nada: si esa navegacion no ocurria, la pantalla se quedaba en
+   * "Recuperando tu lugar..." para siempre, sin boton ni explicacion.
+   */
   useEffect(() => {
     const stored = loadIdentity(code);
-    if (!stored) {
-      router.replace(`/unirse/${code}`);
-      return;
-    }
     setIdentity(stored);
     setChecked(true);
+    if (!stored) router.replace(`/unirse/${code}`);
   }, [code, router]);
 
-  if (!checked || !identity) {
+  if (!checked) {
     return (
       <main className="grid min-h-dvh place-items-center p-gutter-mobile">
         <p className="text-body-md text-on-surface-variant">Recuperando tu lugar...</p>
+      </main>
+    );
+  }
+
+  if (!identity) {
+    return (
+      <main className="grid min-h-dvh place-items-center p-gutter-mobile">
+        <Card className="w-full max-w-sm text-center">
+          <Icon name="alert" className="mx-auto h-8 w-8 text-error" />
+          <p className="mt-space-sm text-headline-sm">No encontramos tu lugar</p>
+          <p className="mt-space-xs text-body-md text-on-surface-variant">
+            Este navegador no guardo quien eres en esta sala. Entra otra vez con tu nombre.
+          </p>
+          <Button className="mt-space-md" block icon="user" onClick={() => router.replace(`/unirse/${code}`)}>
+            Ir a unirme
+          </Button>
+        </Card>
       </main>
     );
   }
@@ -169,6 +190,18 @@ function BuzzerBody({ code, identity }: { code: string; identity: ParticipantIde
           <AvatarIcon iconKey={identity.iconKey} className="h-5 w-5" />
         </span>
       </header>
+
+      {/*
+        El navegador no pudo guardar la identidad (tipico de Safari en
+        navegacion privada). Se sigue jugando con el respaldo en memoria, pero
+        una recarga pierde el lugar: mas vale avisarlo que dejarlo descubrirlo.
+      */}
+      {!identityIsPersistent() && (
+        <p className="flex items-center gap-2 border-b-[1.5px] border-outline-variant bg-error-container px-gutter-mobile py-2 text-body-sm text-on-error-container">
+          <Icon name="alert" className="h-4 w-4 shrink-0" />
+          Tu navegador no guarda tu lugar. No recargues ni cierres esta pestaña.
+        </p>
+      )}
 
       <div className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-space-sm px-gutter-mobile py-space-sm">
         {/* -------- Tira del equipo -------- */}
