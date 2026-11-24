@@ -1,0 +1,31 @@
+# Despliegue en Render (https://render.com)
+#
+# Un solo servicio web: Next y el servidor de WebSockets comparten puerto, asi
+# que no hace falta nada mas. Recuerda permitir el acceso desde cualquier IP
+# (0.0.0.0/0) en Network Access de MongoDB Atlas, porque Render no da IP fija
+# en el plan gratuito.
+#
+# OJO: para que Render lea este archivo como Blueprint tiene que estar en la
+# RAIZ del repositorio. Como la app vive en la subcarpeta appExposicion/, o
+# mueves este archivo a la raiz agregando `rootDir: appExposicion` a cada
+# servicio, o creas el servicio a mano en el panel poniendo
+# Root Directory = appExposicion y copiando los comandos de abajo.
+services:
+  - type: web
+    name: amai-activity
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        sync: false   # se pega a mano en el panel de Render
+      - key: MONGODB_DB
+        value: amai_activity
+      # La dependencia de pruebas descarga 141 MB de mongod al instalar:
+      # en el servidor no hace falta y solo alarga el build.
+      - key: MONGOMS_DISABLE_POSTINSTALL
+        value: "1"
