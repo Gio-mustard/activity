@@ -159,7 +159,8 @@ Variables de entorno, **antes del primer deploy**:
 | `MONGODB_DB` | `amai_activity` |
 | `MONGOMS_DISABLE_POSTINSTALL` | `1` |
 
-`NODE_ENV` y `PORT` los pone Render solo.
+`NODE_ENV` y `PORT` los pone Render solo. **No definas `PORT` a mano**: si la
+pisas, el router de Render busca la app en un puerto donde no está escuchando.
 
 El health check pega a `/api/health`, que responde 503 si falta `MONGODB_URI`.
 Es a propósito: si te falta la variable, el deploy falla de inmediato en vez de

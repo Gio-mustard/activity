@@ -47,7 +47,18 @@ function loadLocalEnv() {
 loadLocalEnv();
 
 const port = Number(process.env.PORT ?? 3000);
-const hostname = process.env.HOSTNAME ?? '0.0.0.0';
+
+/*
+ * Se escucha en 0.0.0.0 (todas las interfaces), nunca en `process.env.HOSTNAME`.
+ *
+ * En Docker y en Render, HOSTNAME es el NOMBRE DEL CONTENEDOR, no la interfaz
+ * donde atar el socket. Atarse a el deja el servidor escuchando en una sola
+ * direccion y el router de la plataforma nunca lo alcanza: la app arranca sin
+ * errores, la plataforma la da por viva y aun asi no responde nada.
+ *
+ * Para atar a una interfaz concreta a proposito, usa HOST.
+ */
+const hostname = process.env.HOST ?? '0.0.0.0';
 
 async function main() {
   const app = next({ dev, dir, hostname, port });
@@ -79,8 +90,13 @@ async function main() {
   });
 
   server.listen(port, hostname, () => {
-    const shown = hostname === '0.0.0.0' ? 'localhost' : hostname;
-    console.log(`\n  Amai Activity listo en http://${shown}:${port}`);
+    // Se imprime la direccion REAL del socket, no la que pedimos: si alguna vez
+    // vuelve a atarse donde no debe, se ve aqui en la primera linea del log.
+    const bound = server.address();
+    const real = typeof bound === 'object' && bound ? `${bound.address}:${bound.port}` : `${hostname}:${port}`;
+    const shown = hostname === '0.0.0.0' ? `localhost:${port}` : `${hostname}:${port}`;
+    console.log(`\n  Amai Activity escuchando en ${real}`);
+    console.log(`  Abrela en http://${shown}`);
     console.log(`  WebSocket en /api/realtime  ·  modo ${dev ? 'desarrollo' : 'produccion'}`);
     if (!process.env.MONGODB_URI) {
       console.warn('\n  ⚠  Falta MONGODB_URI: copia .env.example a .env.local y pega tu cadena de Atlas.\n');
