@@ -106,7 +106,7 @@ export function Page({ children, wide = false }: { children: ReactNode; wide?: b
   return (
     <main
       className={cx(
-        'mx-auto w-full px-gutter-mobile py-space-md sm:px-gutter sm:py-space-lg',
+        'pb-barra-navegador mx-auto w-full px-gutter-mobile py-space-md sm:px-gutter sm:py-space-lg',
         wide ? 'max-w-[1400px]' : 'max-w-3xl',
       )}
     >

@@ -304,3 +304,18 @@
   .ripple-ring { animation: none !important; }
   .press-hard, .press-hard-sm { transition: none; }
 }
+
+/*
+ * Hueco para la barra flotante del navegador movil.
+ *
+ * Safari en iPhone dibuja su barra de direcciones ENCIMA del final de la
+ * pagina. Lo ultimo del documento -que aqui suele ser el boton principal o el
+ * pie con el estado de la conexion- nacia tapado, y el alumno tenia que
+ * adivinar que podia desplazar para alcanzarlo.
+ *
+ * Se reserva ese alto mas el area segura del dispositivo. En escritorio
+ * env() vale 0 y solo queda el margen, que no estorba.
+ */
+.pb-barra-navegador {
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 5rem);
+}

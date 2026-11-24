@@ -19,7 +19,7 @@ import { formatClock, formatReaction } from '@/controllers/rules';
 import { useLiveRoom } from '@/realtime/useLiveRoom';
 import { CountdownBar } from '@/views/components/Countdown';
 import { Button, Card, LiveBadge, Pill, Toast, cx } from '@/views/components/ui';
-import type { ParticipantIdentity } from '@/lib/types';
+import type { ParticipantIdentity, RoundPhase } from '@/lib/types';
 
 export function BuzzerScreen({ code }: { code: string }) {
   const router = useRouter();
@@ -169,7 +169,7 @@ function BuzzerBody({ code, identity }: { code: string; identity: ParticipantIde
   const correctKey = state.phase === 'revealed' ? state.reveal?.correctOptionKey : null;
 
   return (
-    <main className="flex min-h-dvh flex-col bg-surface">
+    <main className="pb-barra-navegador flex min-h-dvh flex-col bg-surface">
       {/* -------- Encabezado compacto -------- */}
       <header className="flex items-center gap-2 border-b-[1.5px] border-outline-variant bg-surface-lowest px-gutter-mobile py-2.5">
         <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-primary-container text-on-primary">
@@ -278,6 +278,7 @@ function BuzzerBody({ code, identity }: { code: string; identity: ParticipantIde
               myAnswer={team.answerKey}
               answered={answered}
               correctKey={correctKey ?? null}
+              phase={state.phase}
               disabled={state.phase !== 'running' || answered}
               onPick={async (key) => {
                 const result = await answer(key);
@@ -471,6 +472,7 @@ function ClosedAnswers({
   myAnswer,
   answered,
   correctKey,
+  phase,
   disabled,
   onPick,
 }: {
@@ -478,14 +480,32 @@ function ClosedAnswers({
   myAnswer: string | null;
   answered: boolean;
   correctKey: string | null;
+  phase: RoundPhase;
   disabled: boolean;
   onPick: (key: string) => void;
 }) {
+  /*
+   * Por que se dice y no solo se atenua.
+   *
+   * Entre que el docente muestra la pregunta y que arranca el cronometro, las
+   * opciones estan apagadas. Antes solo bajaban de opacidad: el alumno tocaba,
+   * no pasaba nada y creia que la app estaba rota. El pulsador de las
+   * preguntas abiertas ya avisaba con estas mismas palabras.
+   */
+  const espera = !answered && phase !== 'running' && phase !== 'revealed';
+
   return (
     <div className="space-y-2">
       {answered ? (
         <p className="rounded-md border-[1.5px] border-primary-container bg-primary-fixed/50 px-3 py-2 text-center text-body-sm text-primary">
           Su equipo respondio <strong className="font-mono">{myAnswer}</strong>. Espera la revelacion.
+        </p>
+      ) : null}
+
+      {espera ? (
+        <p className="flex items-center justify-center gap-2 rounded-md border-[1.5px] border-outline-variant bg-surface-highest px-3 py-2 text-center text-body-sm text-on-surface-variant">
+          <Icon name="clock" className="h-4 w-4 shrink-0" />
+          Espera a que arranque el cronometro
         </p>
       ) : null}
 

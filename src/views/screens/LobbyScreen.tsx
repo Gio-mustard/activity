@@ -115,7 +115,7 @@ export function LobbyScreen({ code }: { code: string }) {
   const canSubmit = Boolean(teamId && name.trim() && !saving && (!full || known));
 
   return (
-    <main className="mx-auto w-full max-w-lg px-gutter-mobile py-space-md">
+    <main className="pb-barra-navegador mx-auto w-full max-w-lg px-gutter-mobile py-space-md">
       <div className="mb-space-md flex items-center justify-between gap-2">
         <Logo size="sm" />
         <Pill tone="success">
