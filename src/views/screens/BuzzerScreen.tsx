@@ -107,10 +107,38 @@ function BuzzerBody({ code, identity }: { code: string; identity: ParticipantIde
     );
   }
 
+  /*
+   * Espera con salida. Antes era un texto mudo: si el alta se perdia, el
+   * alumno se quedaba mirando "Conectando..." sin saber si era su señal, la
+   * sala o la app, y sin nada que tocar.
+   */
   if (!state || !team) {
+    const conectado = status === 'online';
     return (
       <main className="grid min-h-dvh place-items-center p-gutter-mobile">
-        <p className="text-body-md text-on-surface-variant">Conectando con la sala...</p>
+        <Card className="w-full max-w-sm text-center">
+          <p className="text-headline-sm">
+            {conectado ? 'Entrando a tu equipo...' : 'Conectando con la sala...'}
+          </p>
+          <p className="mt-1 text-body-sm text-on-surface-variant">
+            {conectado
+              ? 'Ya hay señal con el servidor; terminando de sincronizar.'
+              : 'Revisa tu conexion. Se reintenta solo cada pocos segundos.'}
+          </p>
+          <Button className="mt-space-md" block icon="refresh" onClick={() => window.location.reload()}>
+            Reintentar
+          </Button>
+          <button
+            type="button"
+            className="mt-space-sm text-body-sm text-on-surface-variant underline"
+            onClick={() => {
+              clearIdentity(code);
+              router.replace(`/unirse/${code}`);
+            }}
+          >
+            Volver a elegir equipo
+          </button>
+        </Card>
       </main>
     );
   }

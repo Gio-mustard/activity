@@ -58,6 +58,9 @@ export function useLiveRoom({ code, role, adminCode, participantId, enabled = tr
     });
     socketRef.current = socket;
 
+    // Se marca en cuanto llega el primer estado, por el ack o por el canal.
+    let recibioEstado = false;
+
     const sendJoin = () => {
       const startedAt = Date.now();
       socket.emit('join', { code, role, adminCode, participantId }, (response: Ack<LiveStateView>) => {
@@ -66,6 +69,7 @@ export function useLiveRoom({ code, role, adminCode, participantId, enabled = tr
           setStatus('online');
           setError(null);
           if (response.data) {
+            recibioEstado = true;
             setState(response.data);
             tickRef.current = {
               payload: {
@@ -95,6 +99,31 @@ export function useLiveRoom({ code, role, adminCode, participantId, enabled = tr
      * ademas se queda congelada para siempre. Este latido la refresca con el
      * costo real de la red, que es lo que el docente ve en su consola.
      */
+    /*
+     * Reintento del alta.
+     *
+     * El estado inicial llegaba solo en el ack del `join`. En una red movil
+     * ese ack se puede perder sin que el socket se caiga, y entonces la
+     * pantalla se quedaba en "Conectando..." para siempre: el alumno no veia
+     * nada hasta que el docente hacia algo que disparaba una difusion.
+     * Mientras no haya estado, se vuelve a pedir.
+     */
+    const reintento = setInterval(() => {
+      if (socket.connected && !recibioEstado) sendJoin();
+    }, 3000);
+
+    /*
+     * Al volver de segundo plano. iOS congela la pagina y el socket queda
+     * medio muerto: se pide el estado otra vez para no seguir mostrando algo
+     * viejo (por ejemplo una pregunta que ya paso).
+     */
+    const alVolver = () => {
+      if (document.visibilityState !== 'visible') return;
+      if (socket.connected) sendJoin();
+      else socket.connect();
+    };
+    document.addEventListener('visibilitychange', alVolver);
+
     const beat = setInterval(() => {
       if (!socket.connected) return;
       const sentAt = Date.now();
@@ -102,6 +131,7 @@ export function useLiveRoom({ code, role, adminCode, participantId, enabled = tr
     }, 10_000);
 
     socket.on('state', (next) => {
+      recibioEstado = true;
       setState(next);
       tickRef.current = {
         payload: {
@@ -128,6 +158,8 @@ export function useLiveRoom({ code, role, adminCode, participantId, enabled = tr
 
     return () => {
       clearInterval(beat);
+      clearInterval(reintento);
+      document.removeEventListener('visibilitychange', alVolver);
       socket.removeAllListeners();
       socket.disconnect();
       socketRef.current = null;

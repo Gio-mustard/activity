@@ -53,6 +53,17 @@ type AppSocket = Socket<ClientToServerEvents, ServerToClientEvents, Record<strin
 
 let io: AppServer | null = null;
 
+/**
+ * Socket vivo de cada participante.
+ *
+ * iOS congela la pagina al pasar a segundo plano y el servidor no se entera
+ * hasta que vence el ping, varios segundos despues. Para entonces el alumno ya
+ * volvio y abrio un socket nuevo, asi que la desconexion del viejo llegaba
+ * tarde y lo marcaba ausente estando presente. Con esto, una desconexion solo
+ * cuenta si viene del socket que de verdad esta en uso.
+ */
+const activeSockets = new Map<string, string>();
+
 function message(error: unknown): string {
   if (error instanceof ControllerError) return error.message;
   if (error instanceof Error) return error.message;
@@ -118,10 +129,16 @@ export function attachRealtime(httpServer: HttpServer): AppServer {
           }
           const teamId = String(participant.teamId);
           socket.data = { code, role: 'player', participantId, teamId };
+          activeSockets.set(participantId, socket.id);
           await socket.join([ROOMS.all(code), ROOMS.team(code, teamId)]);
           await setConnected(participantId, true);
           await refreshRoster(room);
-          ack({ ok: true, data: buildState(room, { role: 'player', teamId }) });
+          const estado = buildState(room, { role: 'player', teamId });
+          ack({ ok: true, data: estado });
+          // Ademas del ack, se empuja el estado por el canal normal. Si el ack
+          // se pierde (red movil, cambio de transporte), el cliente igual
+          // recibe su estado inicial y no se queda en "Conectando...".
+          socket.emit('state', estado);
           broadcastState(code);
           return;
         }
@@ -176,6 +193,10 @@ export function attachRealtime(httpServer: HttpServer): AppServer {
     socket.on('disconnect', async () => {
       const { code, participantId } = socket.data ?? {};
       if (!code || !participantId) return;
+      // Si el participante ya tiene otro socket, esta desconexion es de una
+      // sesion vieja y no debe marcarlo ausente.
+      if (activeSockets.get(participantId) !== socket.id) return;
+      activeSockets.delete(participantId);
       try {
         await setConnected(participantId, false);
         const room = peekRoom(code);
