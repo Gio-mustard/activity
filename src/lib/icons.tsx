@@ -340,6 +340,10 @@ export const UI_ICONS = {
       p('M4 4l16 16'),
     ],
   },
+  upload: {
+    label: 'Importar',
+    shapes: [p('M12 20V8.5'), p('M7.5 13L12 8.5l4.5 4.5'), p('M4.5 7V5.5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2V7')],
+  },
   send: { label: 'Enviar', shapes: [p('M21 3L10.5 13.5M21 3l-6.8 18-3.7-7.5L3 10l18-7z')] },
 } as const satisfies Record<string, IconDef>;
 

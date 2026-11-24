@@ -12,6 +12,7 @@ import { Participant } from '@/models/Participant';
 import { ScoreEvent } from '@/models/ScoreEvent';
 import { generateAdminCode, generateJoinCode, generateTeamCode, normalizeCode } from '@/lib/codes';
 import { MAX_TEAM_CAPACITY, SUGGESTED_TEAM_ICONS, SUGGESTED_TEAM_NAMES, colorKeyForIndex } from '@/lib/teams';
+import { MAX_BUNDLE_QUESTIONS } from '@/lib/questionBundle';
 import { validateQuestion } from './rules';
 import { toAdminQuestion, toTeamView } from './presenters';
 import type { AdminQuestion, QuestionType, TeamView } from '@/lib/types';
@@ -377,6 +378,38 @@ export async function addQuestion(activity: ActivityDoc, input: QuestionInput) {
   activity.questions.push(newQuestion(normalizeQuestion(input, activity.defaults)));
   await activity.save();
   return activity;
+}
+
+/**
+ * Alta de un lote de preguntas desde un JSON.
+ *
+ * O entran todas o no entra ninguna: se normaliza el lote completo antes de
+ * tocar la actividad. A medio importar, el docente no sabria cuales quedaron
+ * ni por donde seguir, y el banco es justo lo que prepara antes de la clase.
+ */
+export async function importQuestions(activity: ActivityDoc, raw: unknown) {
+  const lista = Array.isArray(raw) ? raw : (raw as { questions?: unknown })?.questions;
+
+  if (!Array.isArray(lista)) {
+    throw new ControllerError('El JSON debe ser una lista de preguntas o un objeto con la clave "questions".');
+  }
+  if (lista.length === 0) throw new ControllerError('El JSON no trae ninguna pregunta.');
+  if (lista.length > MAX_BUNDLE_QUESTIONS) {
+    throw new ControllerError(`Son demasiadas preguntas en un archivo (maximo ${MAX_BUNDLE_QUESTIONS}).`);
+  }
+
+  const normalizadas = lista.map((entrada, i) => {
+    try {
+      return normalizeQuestion(entrada as QuestionInput, activity.defaults);
+    } catch (error) {
+      const detalle = error instanceof ControllerError ? error.message : 'No se pudo leer.';
+      throw new ControllerError(`Pregunta ${i + 1}: ${detalle}`);
+    }
+  });
+
+  for (const pregunta of normalizadas) activity.questions.push(newQuestion(pregunta));
+  await activity.save();
+  return { imported: normalizadas.length };
 }
 
 export async function updateQuestion(activity: ActivityDoc, questionId: string, input: QuestionInput) {

@@ -14,6 +14,7 @@ import { AdminGate } from '@/views/components/AdminGate';
 import { AdminTabs } from '@/views/components/adminNav';
 import { AppFooter, AppHeader, Page } from '@/views/components/brand';
 import { QuestionForm } from '@/views/components/QuestionForm';
+import { QuestionImport } from '@/views/components/QuestionImport';
 import { QrPoster, TeamQrBoard } from '@/views/components/Qr';
 import { TeamCard, type TeamPatch } from '@/views/components/TeamCard';
 import { Button, Card, EmptyState, NumberStepper, Pill, SectionTitle, Toast, cx } from '@/views/components/ui';
@@ -42,6 +43,7 @@ function ConfigBody({ code, adminCode }: { code: string; adminCode: string }) {
   const [showAdminCode, setShowAdminCode] = useState(false);
   const [copied, setCopied] = useState(false);
   const [composing, setComposing] = useState(false);
+  const [jsonOpen, setJsonOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
 
@@ -74,6 +76,19 @@ function ConfigBody({ code, adminCode }: { code: string; adminCode: string }) {
     }
     if (result.data) setSnapshot(result.data);
     return true;
+  }
+
+  /** Sube el lote y deja que la tarjeta muestre el error, que es donde se esta mirando. */
+  async function importQuestionBundle(bundle: unknown): Promise<string | null> {
+    setSaving(true);
+    const result = await api<{ imported: number; activity: ActivitySnapshot }>(
+      `/api/activities/${code}/questions/import`,
+      { method: 'POST', headers, body: JSON.stringify(bundle) },
+    );
+    setSaving(false);
+    if (!result.ok || !result.data) return result.error ?? 'No se pudo importar el banco.';
+    setSnapshot(result.data.activity);
+    return null;
   }
 
   if (!snapshot) {
@@ -271,13 +286,29 @@ function ConfigBody({ code, adminCode }: { code: string; adminCode: string }) {
         <SectionTitle
           icon="puzzle"
           action={
-            <Button variant="primary" size="sm" hard icon="plus" onClick={() => setComposing(true)}>
-              Agregar pregunta
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                icon={jsonOpen ? 'close' : 'upload'}
+                aria-expanded={jsonOpen}
+                onClick={() => setJsonOpen((abierto) => !abierto)}
+              >
+                {jsonOpen ? 'Cerrar JSON' : 'JSON'}
+              </Button>
+              <Button variant="primary" size="sm" hard icon="plus" onClick={() => setComposing(true)}>
+                Agregar pregunta
+              </Button>
+            </div>
           }
         >
           Banco de retos ({snapshot.questions.length})
         </SectionTitle>
+
+        {jsonOpen ? (
+          <div className="mb-space-md grid gap-space-md lg:grid-cols-2">
+            <QuestionImport busy={saving} onImport={importQuestionBundle} />
+          </div>
+        ) : null}
 
         {composing ? (
           <div className="mb-space-md">
