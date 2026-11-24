@@ -34,6 +34,11 @@ function ConfigBody({ code, adminCode }: { code: string; adminCode: string }) {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [showQr, setShowQr] = useState(false);
+  /*
+   * El codigo de administrador nace tapado: esta pantalla se proyecta en
+   * clase y con el a la vista cualquier alumno abre la consola del docente.
+   */
+  const [showAdminCode, setShowAdminCode] = useState(false);
   const [copied, setCopied] = useState(false);
   const [composing, setComposing] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -187,10 +192,25 @@ function ConfigBody({ code, adminCode }: { code: string; adminCode: string }) {
             </div>
           </div>
 
-          <p className="mt-space-md border-t border-on-primary/20 pt-space-sm text-body-sm opacity-90">
-            Codigo de administrador: <strong className="font-mono tracking-wider">{snapshot.adminCode}</strong> ·
-            guardalo, lo necesitas para abrir la consola en otro dispositivo.
-          </p>
+          <div className="mt-space-md border-t border-on-primary/20 pt-space-sm text-body-sm opacity-90">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <span>Codigo de administrador:</span>
+              <strong className="font-mono tracking-wider">
+                {showAdminCode ? snapshot.adminCode : snapshot.adminCode.replace(/[^-]/g, '\u2022')}
+              </strong>
+              <button
+                type="button"
+                aria-pressed={showAdminCode}
+                aria-label={showAdminCode ? 'Ocultar el codigo de administrador' : 'Mostrar el codigo de administrador'}
+                onClick={() => setShowAdminCode((visible) => !visible)}
+                className="flex items-center gap-1 rounded px-2 py-1 text-label-sm hover:bg-on-primary/15"
+              >
+                <Icon name={showAdminCode ? 'eyeOff' : 'eye'} className="h-4 w-4" />
+                {showAdminCode ? 'Ocultar' : 'Mostrar'}
+              </button>
+            </div>
+            <p className="mt-1">Guardalo: lo necesitas para abrir la consola en otro dispositivo.</p>
+          </div>
         </div>
 
         {/* ---------------- Equipos ---------------- */}
