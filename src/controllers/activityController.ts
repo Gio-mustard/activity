@@ -11,7 +11,7 @@ import { Team, type TeamDoc } from '@/models/Team';
 import { Participant } from '@/models/Participant';
 import { ScoreEvent } from '@/models/ScoreEvent';
 import { generateAdminCode, generateJoinCode, generateTeamCode, normalizeCode } from '@/lib/codes';
-import { SUGGESTED_TEAM_ICONS, SUGGESTED_TEAM_NAMES, colorKeyForIndex } from '@/lib/teams';
+import { MAX_TEAM_CAPACITY, SUGGESTED_TEAM_ICONS, SUGGESTED_TEAM_NAMES, colorKeyForIndex } from '@/lib/teams';
 import { validateQuestion } from './rules';
 import { toAdminQuestion, toTeamView } from './presenters';
 import type { AdminQuestion, QuestionType, TeamView } from '@/lib/types';
@@ -97,7 +97,7 @@ export async function createActivity(input: CreateActivityInput) {
   await connectDB();
   if (!input.title?.trim()) throw new ControllerError('La actividad necesita un titulo.');
   const teamCount = Math.min(Math.max(input.teamCount || 4, 1), 8);
-  const teamCapacity = Math.min(Math.max(input.teamCapacity || 5, 1), 20);
+  const teamCapacity = Math.min(Math.max(input.teamCapacity || 5, 1), MAX_TEAM_CAPACITY);
 
   const activity = await Activity.create({
     title: input.title.trim(),
@@ -278,7 +278,7 @@ export async function updateActivityMeta(
   if (patch.description !== undefined) activity.description = patch.description.trim();
   if (patch.unit !== undefined) activity.unit = patch.unit.trim();
   if (patch.teamCapacity !== undefined) {
-    activity.teamCapacity = Math.min(Math.max(patch.teamCapacity, 1), 20);
+    activity.teamCapacity = Math.min(Math.max(patch.teamCapacity, 1), MAX_TEAM_CAPACITY);
     await Team.updateMany({ activityId: activity._id }, { $set: { capacity: activity.teamCapacity } });
   }
   await activity.save();
@@ -317,7 +317,7 @@ export async function updateTeam(
   if (patch.description !== undefined) team.description = patch.description.trim();
   if (patch.iconKey !== undefined) team.iconKey = patch.iconKey;
   if (patch.colorKey !== undefined) team.colorKey = patch.colorKey;
-  if (patch.capacity !== undefined) team.capacity = Math.min(Math.max(patch.capacity, 1), 20);
+  if (patch.capacity !== undefined) team.capacity = Math.min(Math.max(patch.capacity, 1), MAX_TEAM_CAPACITY);
   await team.save();
   return team;
 }

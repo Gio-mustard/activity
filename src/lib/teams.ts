@@ -5,6 +5,16 @@
  * declara explicitamente su color de texto (`on`).
  */
 
+/**
+ * Tope de integrantes por equipo.
+ *
+ * Vive aqui porque lo comparten el modelo (validacion de Mongo), el
+ * controlador (que recorta lo que llega de la API) y los selectores de la
+ * interfaz. Estaba escrito a mano en ocho lugares, que es la forma segura de
+ * que un dia dejen de coincidir.
+ */
+export const MAX_TEAM_CAPACITY = 30;
+
 export interface TeamColor {
   key: string;
   label: string;

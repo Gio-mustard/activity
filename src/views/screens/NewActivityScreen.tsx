@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import { AppFooter, AppHeader, Page } from '@/views/components/brand';
 import { Button, Card, Field, Input, NumberStepper, Textarea, Toast } from '@/views/components/ui';
 import { api, rememberRoom, saveAdminCode } from '@/lib/client';
+import { MAX_TEAM_CAPACITY } from '@/lib/teams';
 
 export function NewActivityScreen() {
   const router = useRouter();
@@ -85,7 +86,13 @@ export function NewActivityScreen() {
 
             <div className="flex flex-wrap items-center gap-space-md border-t-[1.5px] border-outline-variant pt-space-md">
               <NumberStepper label="Equipos" value={teamCount} min={1} max={8} onChange={setTeamCount} />
-              <NumberStepper label="Cupo por equipo" value={teamCapacity} min={1} max={20} onChange={setTeamCapacity} />
+              <NumberStepper
+                label="Cupo por equipo"
+                value={teamCapacity}
+                min={1}
+                max={MAX_TEAM_CAPACITY}
+                onChange={setTeamCapacity}
+              />
             </div>
 
             <label className="flex cursor-pointer items-start gap-2.5 rounded border-[1.5px] border-outline-variant bg-surface-low p-3">

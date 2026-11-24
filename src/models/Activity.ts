@@ -15,6 +15,7 @@
  */
 import mongoose, { Schema, Types, type HydratedDocument, type Model } from 'mongoose';
 import type { ActivityStatus, Difficulty, QuestionType, RoundPhase } from '@/lib/types';
+import { MAX_TEAM_CAPACITY } from '@/lib/teams';
 
 export interface QuestionOptionAttrs {
   key: string;
@@ -141,7 +142,7 @@ const ActivitySchema = new Schema<ActivityAttrs>(
     joinCode: { type: String, required: true, unique: true, uppercase: true, index: true },
     adminCode: { type: String, required: true, index: true },
     status: { type: String, enum: ['draft', 'live', 'finished'], default: 'draft', index: true },
-    teamCapacity: { type: Number, default: 5, min: 1, max: 20 },
+    teamCapacity: { type: Number, default: 5, min: 1, max: MAX_TEAM_CAPACITY },
     questions: { type: [QuestionSchema], default: [] },
     defaults: { type: DefaultsSchema, default: () => ({}) },
     live: { type: LiveSchema, default: () => ({}) },

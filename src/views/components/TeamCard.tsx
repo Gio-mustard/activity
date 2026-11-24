@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import type { TeamView } from '@/lib/types';
 import { AvatarIcon, Icon } from '@/lib/icons';
-import { initials, teamColor } from '@/lib/teams';
+import { MAX_TEAM_CAPACITY, initials, teamColor } from '@/lib/teams';
 import { copyText } from '@/lib/client';
 import { Button, Field, Input, Pill, Textarea, cx } from './ui';
 import { ColorPicker, IconPicker } from './IconPicker';
@@ -147,7 +147,7 @@ export function TeamCard({
             <Input
               type="number"
               min={1}
-              max={20}
+              max={MAX_TEAM_CAPACITY}
               value={Number(value('capacity'))}
               onChange={(e) => setDraft((d) => ({ ...d, capacity: Number(e.target.value) }))}
               className="tabular"

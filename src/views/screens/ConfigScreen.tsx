@@ -19,6 +19,7 @@ import { TeamCard, type TeamPatch } from '@/views/components/TeamCard';
 import { Button, Card, EmptyState, NumberStepper, Pill, SectionTitle, Toast, cx } from '@/views/components/ui';
 import { Icon } from '@/lib/icons';
 import { api, adminHeaders, copyText, joinUrl, rememberRoom } from '@/lib/client';
+import { MAX_TEAM_CAPACITY } from '@/lib/teams';
 import type { ActivitySnapshot } from '@/controllers/activityController';
 import type { QuestionInput } from '@/controllers/activityController';
 import type { AdminQuestion } from '@/lib/types';
@@ -210,7 +211,7 @@ function ConfigBody({ code, adminCode }: { code: string; adminCode: string }) {
                 label="Cupo"
                 value={snapshot.teamCapacity}
                 min={1}
-                max={20}
+                max={MAX_TEAM_CAPACITY}
                 onChange={(teamCapacity) =>
                   mutate(`/api/activities/${code}`, { method: 'PATCH', body: JSON.stringify({ teamCapacity }) })
                 }

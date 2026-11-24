@@ -8,6 +8,7 @@
  * equipo sin pasar por el selector.
  */
 import mongoose, { Schema, Types, type HydratedDocument, type Model } from 'mongoose';
+import { MAX_TEAM_CAPACITY } from '@/lib/teams';
 
 export interface TeamAttrs {
   activityId: Types.ObjectId;
@@ -38,7 +39,7 @@ const TeamSchema = new Schema<TeamAttrs>(
     iconKey: { type: String, default: 'layers' },
     colorKey: { type: String, default: 'indigo' },
     joinCode: { type: String, required: true, unique: true, uppercase: true, index: true },
-    capacity: { type: Number, default: 5, min: 1, max: 20 },
+    capacity: { type: Number, default: 5, min: 1, max: MAX_TEAM_CAPACITY },
     score: { type: Number, default: 0 },
     streak: { type: Number, default: 0 },
     correctCount: { type: Number, default: 0 },
