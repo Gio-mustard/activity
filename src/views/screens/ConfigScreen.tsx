@@ -14,7 +14,7 @@ import { AdminGate } from '@/views/components/AdminGate';
 import { AdminTabs } from '@/views/components/adminNav';
 import { AppFooter, AppHeader, Page } from '@/views/components/brand';
 import { QuestionForm } from '@/views/components/QuestionForm';
-import { QrPoster } from '@/views/components/QrPoster';
+import { QrPoster } from '@/views/components/Qr';
 import { TeamCard, type TeamPatch } from '@/views/components/TeamCard';
 import { Button, Card, EmptyState, NumberStepper, Pill, SectionTitle, Toast, cx } from '@/views/components/ui';
 import { Icon } from '@/lib/icons';

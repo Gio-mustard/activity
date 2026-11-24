@@ -5,9 +5,10 @@ import { useState } from 'react';
 import type { TeamView } from '@/lib/types';
 import { AvatarIcon, Icon } from '@/lib/icons';
 import { MAX_TEAM_CAPACITY, initials, teamColor } from '@/lib/teams';
-import { copyText } from '@/lib/client';
+import { copyText, joinUrl } from '@/lib/client';
 import { Button, Field, Input, Pill, Textarea, cx } from './ui';
 import { ColorPicker, IconPicker } from './IconPicker';
+import { QrImage } from './Qr';
 
 export interface TeamPatch {
   name?: string;
@@ -98,8 +99,12 @@ export function TeamCard({
             )}
           </div>
 
-          <div className="mt-space-md flex items-center justify-between rounded border-[1.5px] border-outline-variant bg-surface-low px-3 py-2">
-            <span>
+          {/*
+            El QR lleva al enlace de ESTE equipo, no al general: el alumno
+            entra sin elegir equipo de una lista, que es donde se equivocan.
+          */}
+          <div className="mt-space-md flex items-center gap-3 rounded border-[1.5px] border-outline-variant bg-surface-low px-3 py-2">
+            <span className="min-w-0 flex-1">
               <span className="block text-label-sm uppercase text-on-surface-variant">Acceso directo</span>
               <span className="font-mono text-label-lg tracking-wider">{team.joinCode}</span>
             </span>
@@ -107,10 +112,16 @@ export function TeamCard({
               type="button"
               aria-label="Copiar codigo del equipo"
               onClick={copy}
-              className="rounded p-1.5 text-on-surface-variant hover:bg-surface-container"
+              className="shrink-0 rounded p-1.5 text-on-surface-variant hover:bg-surface-container"
             >
               <Icon name={copied ? 'check' : 'copy'} className="h-4 w-4" />
             </button>
+            <QrImage
+              url={joinUrl(team.joinCode)}
+              size={72}
+              alt={`Codigo QR para entrar a ${team.name}`}
+              className="shrink-0"
+            />
           </div>
         </>
       ) : (
