@@ -95,20 +95,27 @@ function PodiumBody({ code, adminCode }: { code: string; adminCode: string }) {
                 >
                   {state?.podiumVisible ? 'Ocultar en proyector' : 'Mostrar en proyector'}
                 </Button>
-                {!finished ? (
-                  <Button
-                    variant="danger"
-                    hard
-                    icon="flag"
-                    onClick={async () => {
-                      if (!confirm('¿Terminar la sesion? Ya no se podran dar mas puntos.')) return;
-                      await command({ type: 'activity:finish' });
-                      await load();
-                    }}
-                  >
-                    Terminar sesion
-                  </Button>
-                ) : null}
+                {/*
+                  El boton sigue disponible con la actividad terminada: cuando
+                  se acaba el banco la sala queda "terminada" pero con la gente
+                  dentro, y cerrarla es justo lo que falta por hacer.
+                */}
+                <Button
+                  variant="danger"
+                  hard
+                  icon="flag"
+                  onClick={async () => {
+                    const aviso =
+                      'Esto saca a todos los participantes de sus equipos y pone los puntajes en cero, ' +
+                      'para que la sala quede lista para el siguiente grupo. La bitacora de puntos se conserva. ' +
+                      '¿Terminar la sesion?';
+                    if (!confirm(aviso)) return;
+                    await command({ type: 'activity:finish' });
+                    await load();
+                  }}
+                >
+                  Terminar sesion
+                </Button>
               </div>
             </div>
 

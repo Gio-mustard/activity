@@ -217,8 +217,16 @@ async function runAdminCommand(room: Room, command: AdminCommand) {
   switch (command.type) {
     case 'activity:start':
       return startActivity(room);
-    case 'activity:finish':
-      return finishActivityLive(room);
+    case 'activity:finish': {
+      const { teamIds } = await finishActivityLive(room);
+      /*
+       * Borrarlos de la base no basta: sus telefonos se quedarian mirando una
+       * sala que ya no existe. El evento los devuelve a la pantalla de entrar.
+       */
+      for (const teamId of teamIds) io?.to(ROOMS.team(room.code, teamId)).emit('kicked', 'finished');
+      io?.to(ROOMS.all(room.code)).emit('toast', { kind: 'info', message: 'El docente termino la sesion.' });
+      return broadcastState(room.code);
+    }
     case 'question:go':
       return goToQuestion(room, command.index);
     case 'question:start':

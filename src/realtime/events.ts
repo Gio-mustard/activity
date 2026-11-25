@@ -49,7 +49,8 @@ export interface ServerToClientEvents {
   tick: (payload: TickPayload) => void;
   toast: (payload: ToastPayload) => void;
   /** El docente te saco de la sala. */
-  kicked: () => void;
+  /** `finished` cuando se cerro la sesion; `kicked` cuando fue solo a ese alumno. */
+  kicked: (reason?: 'kicked' | 'finished') => void;
 }
 
 /** Navegador -> servidor. */

@@ -598,9 +598,24 @@ export async function revealQuestion(room: Room) {
   onState(room.code);
 }
 
+/**
+ * Se acabaron las preguntas.
+ *
+ * No es lo mismo que terminar la sesion: aqui el docente todavia tiene que
+ * mostrar el podio, asi que los equipos conservan sus puntos y nadie sale.
+ */
+export async function closeQuestionBank(room: Room) {
+  stopTimer(room);
+  room.phase = 'revealed';
+  room.podiumVisible = true;
+  room.activity.status = 'finished';
+  await persistLive(room);
+  onState(room.code);
+}
+
 export async function nextQuestion(room: Room) {
   if (room.questionIndex + 1 >= room.activity.questions.length) {
-    await finishActivityLive(room);
+    await closeQuestionBank(room);
     return;
   }
   await goToQuestion(room, room.questionIndex + 1);
@@ -631,14 +646,53 @@ export async function adjustTeamScore(room: Room, teamId: string, delta: number)
   onState(room.code);
 }
 
+/**
+ * Cierra la sesion de verdad y deja la sala lista para la siguiente.
+ *
+ * Terminar no terminaba nada: los participantes seguian en sus equipos y la
+ * clase siguiente heredaba la sala a medio usar, con los puntajes del grupo
+ * anterior. Ahora salen todos, los marcadores vuelven a cero y la actividad
+ * regresa a borrador.
+ *
+ * La bitacora de puntos NO se toca: es el registro de lo que paso, y borrarla
+ * es cosa del boton de reiniciar, que avisa de lo que hace.
+ *
+ * Devuelve a quienes hay que avisar, porque sacarlos de la base no basta:
+ * sus pantallas se quedarian mirando una sala que ya no existe.
+ */
 export async function finishActivityLive(room: Room) {
   stopTimer(room);
-  room.phase = 'revealed';
-  room.podiumVisible = true;
-  room.activity.status = 'finished';
+  const equiposConGente = [...new Set(room.participants.map((p) => String(p.teamId)))];
+
+  await Promise.all([
+    Participant.deleteMany({ activityId: room.activityId }),
+    Team.updateMany(
+      { activityId: room.activityId },
+      { $set: { score: 0, streak: 0, correctCount: 0, incorrectCount: 0, bestReactionMs: null } },
+    ),
+  ]);
+
+  room.phase = 'idle';
+  room.questionIndex = -1;
+  room.queue = [];
+  room.floorTeamId = null;
+  room.lockedTeamIds.clear();
+  room.answers.clear();
+  room.lastDeltas.clear();
+  room.buzzOpenedAt = null;
+  room.podiumVisible = false;
+  room.mainRemainingMs = 0;
+  room.mainTotalMs = 0;
+  room.floorRemainingMs = 0;
+  room.floorTotalMs = 0;
+
+  room.activity.status = 'draft';
   room.activity.live.finishedAt = new Date();
   await persistLive(room);
+  await refreshRoster(room);
   onState(room.code);
+
+  return { teamIds: equiposConGente };
 }
 
 /* ================================================================

@@ -151,9 +151,14 @@ export function useLiveRoom({ code, role, adminCode, participantId, enabled = tr
     });
 
     socket.on('toast', (payload) => setToast(payload));
-    socket.on('kicked', () => {
+    socket.on('kicked', (reason) => {
       setStatus('rejected');
-      setError('El docente te saco de la sala.');
+      // Terminar la clase no es lo mismo que echar a alguien: no suena igual.
+      setError(
+        reason === 'finished'
+          ? 'El docente termino la sesion. Gracias por participar.'
+          : 'El docente te saco de la sala.',
+      );
     });
 
     return () => {
