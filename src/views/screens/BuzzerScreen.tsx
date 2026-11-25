@@ -264,8 +264,14 @@ function BuzzerBody({ code, identity }: { code: string; identity: ParticipantIde
         ) : (
           <Card className="p-space-md text-center">
             <p className="text-headline-sm">{state.title}</p>
+            {/*
+              Con la dinamica en curso, que no haya pregunta no es que falte
+              empezar: es que el docente la esta leyendo en voz alta.
+            */}
             <p className="mt-1 text-body-sm text-on-surface-variant">
-              Esperando a que el docente inicie la dinamica. No cierres esta pantalla.
+              {state.status === 'live'
+                ? 'Escucha al docente. La pregunta aparece aqui cuando arranque el cronometro.'
+                : 'Esperando a que el docente inicie la dinamica. No cierres esta pantalla.'}
             </p>
           </Card>
         )}

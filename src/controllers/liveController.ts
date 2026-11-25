@@ -755,6 +755,14 @@ export function buildState(room: Room, audience: Audience): LiveStateView {
   const floorItem = room.floorTeamId ? room.queue.find((q) => q.teamId === room.floorTeamId) : undefined;
   const floorTeam = room.floorTeamId ? teamById(room, room.floorTeamId) : undefined;
 
+  /*
+   * Entre cargar la pregunta y arrancar el cronometro, el docente la lee en
+   * voz alta. Si ya estaba en los telefonos, media clase la leia antes y esa
+   * lectura sobraba. Se oculta SOLO al participante: el proyector y la
+   * consola son del docente, y es el quien decide cuando proyectar.
+   */
+  const ocultaAlParticipante = audience.role === 'player' && room.phase === 'idle';
+
   return {
     code: room.code,
     title: room.activity.title,
@@ -764,11 +772,12 @@ export function buildState(room: Room, audience: Audience): LiveStateView {
     phase: room.phase,
     questionIndex: room.questionIndex,
     totalQuestions: room.activity.questions.length,
-    question: question
-      ? isAdmin
-        ? toAdminQuestion(question, room.questionIndex)
-        : toPublicQuestion(question, room.questionIndex)
-      : null,
+    question:
+      question && !ocultaAlParticipante
+        ? isAdmin
+          ? toAdminQuestion(question, room.questionIndex)
+          : toPublicQuestion(question, room.questionIndex)
+        : null,
     timer: {
       remainingMs: room.mainRemainingMs,
       totalMs: room.mainTotalMs,
