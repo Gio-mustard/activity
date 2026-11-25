@@ -97,14 +97,19 @@ export function TeamQrBoard({ teams, onClose }: { teams: TeamView[]; onClose: ()
           Cada equipo escanea el suyo
         </p>
 
-        <ul className="grid w-full gap-space-md sm:grid-cols-2 lg:grid-cols-3">
+        {/*
+          Flex centrado y no una rejilla: con dos o cinco equipos, una rejilla
+          de tres columnas deja la ultima fila pegada a la izquierda y el
+          tablero se ve torcido al proyectarlo.
+        */}
+        <ul className="flex w-full flex-wrap justify-center gap-space-md">
           {teams.map((team) => {
             const color = teamColor(team.colorKey);
             const url = joinUrl(team.joinCode);
             return (
               <li
                 key={team.id}
-                className="flex flex-col items-center gap-2 rounded-lg border-2 border-on-surface bg-surface-lowest p-space-md shadow-hard"
+                className="flex w-full max-w-[17rem] flex-col items-center gap-2 rounded-lg border-2 border-on-surface bg-surface-lowest p-space-md shadow-hard"
               >
                 <span className="flex items-center gap-2 self-stretch">
                   <span
