@@ -129,3 +129,49 @@ describe('terminar la sesion', () => {
   });
 });
 
+/**
+ * Calificar dos veces la misma pregunta.
+ *
+ * Aparecio probando el confeti: la pregunta se auto-revela cuando contestan
+ * todos los equipos, y el boton de revelar seguia disponible. Pulsarlo
+ * duplicaba los puntos de todos.
+ */
+describe('revelar una pregunta cerrada', () => {
+  it('no vuelve a calificar si ya estaba revelada', async () => {
+    const activity = await activities.createActivity({
+      title: 'Prueba de doble calificacion',
+      teamCount: 1,
+      teamCapacity: 5,
+      withSamples: false,
+    });
+    await activities.addQuestion(activity, {
+      type: 'boolean',
+      prompt: 'Revelar dos veces no debe pagar dos veces.',
+      correctOptionKey: 'V',
+      seconds: 60,
+      points: 100,
+    });
+    const snapshot = await activities.getAdminSnapshot(activity);
+    const teamId = snapshot.teams[0].id;
+    const identidad = await participants.joinTeam({
+      code: activity.joinCode,
+      teamId,
+      name: 'Unica',
+    });
+
+    const room = await live.getRoom(activity.joinCode);
+    await live.startActivity(room);
+    await live.startQuestion(room);
+    await live.submitAnswer(room, identidad.participantId, 'V');
+
+    // Contestaron todos los equipos con gente, asi que ya se revelo sola.
+    assert.equal(room.phase, 'revealed');
+
+    await live.revealQuestion(room); // el docente pulsa el boton de todos modos
+
+    const equipo = await models.Team.findById(teamId);
+    assert.equal(equipo?.score, 100, 'debe pagarse una sola vez');
+    const eventos = await models.ScoreEvent.countDocuments({ activityId: room.activityId });
+    assert.equal(eventos, 1, 'y dejar un solo evento en la bitacora');
+  });
+});

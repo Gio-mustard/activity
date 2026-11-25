@@ -563,6 +563,16 @@ export async function submitAnswer(room: Room, participantId: string, optionKey:
    ================================================================ */
 
 export async function revealQuestion(room: Room) {
+  /*
+   * Revelar es idempotente a proposito.
+   *
+   * Una pregunta cerrada se revela sola en cuanto contestan todos los
+   * equipos, y el boton "Revelar y calificar" sigue ahi. Sin esta guarda,
+   * pulsarlo despues volvia a calificar: cada equipo cobraba sus puntos por
+   * duplicado y la bitacora quedaba con dos eventos identicos.
+   */
+  if (room.phase === 'revealed') return;
+
   const question = requireQuestion(room);
   stopTimer(room);
 
