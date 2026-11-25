@@ -320,3 +320,29 @@
   padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 5rem);
 }
 
+/*
+ * Sacudida de "fallaste", del canal visual del modulo de feedback.
+ *
+ * Corta y lateral: el alumno ya sabe que fallo, no hace falta un rojo a
+ * pantalla completa. Se aplica al contenedor de la pantalla y no al body,
+ * porque un transform en el body rompe el posicionamiento fijo de lo que
+ * cuelga de el, el lienzo del confeti incluido.
+ */
+@keyframes amai-shake {
+  0%, 100% { transform: translateX(0); }
+  10% { transform: translateX(-9px); }
+  22% { transform: translateX(8px); }
+  34% { transform: translateX(-6px); }
+  46% { transform: translateX(5px); }
+  60% { transform: translateX(-3px); }
+  76% { transform: translateX(2px); }
+  90% { transform: translateX(-1px); }
+}
+
+.feedback-shake {
+  animation: amai-shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .feedback-shake { animation: none !important; }
+}

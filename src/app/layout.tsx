@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { JetBrains_Mono, Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
+import { FeedbackProvider } from '@/feedback';
 
 /**
  * Plus Jakarta Sans para todo el sistema (DESIGN.md) y una monoespaciada solo
@@ -35,7 +36,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es" className={`${jakarta.variable} ${mono.variable}`}>
-      <body className="min-h-dvh antialiased">{children}</body>
+      <body className="min-h-dvh antialiased">
+        {/* El feedback envuelve toda la app: cualquier pantalla puede pedirlo. */}
+        <FeedbackProvider>{children}</FeedbackProvider>
+      </body>
     </html>
   );
 }
