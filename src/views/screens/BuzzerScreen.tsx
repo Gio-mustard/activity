@@ -10,13 +10,14 @@
  * En escritorio el mismo boton responde a la tecla Enter (o barra espaciadora),
  * y la pantalla lo anuncia: con mouse se pierden decimas contra un pulgar.
  */
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AvatarIcon, Icon } from '@/lib/icons';
 import { teamColor } from '@/lib/teams';
 import { clearIdentity, identityIsPersistent, loadIdentity } from '@/lib/client';
 import { formatClock, formatReaction } from '@/controllers/rules';
 import { useLiveRoom } from '@/realtime/useLiveRoom';
+import { useFeedback } from '@/feedback';
 import { CountdownBar } from '@/views/components/Countdown';
 import { Button, Card, LiveBadge, Pill, Toast, cx } from '@/views/components/ui';
 import type { ParticipantIdentity, RoundPhase } from '@/lib/types';
@@ -77,6 +78,10 @@ function BuzzerBody({ code, identity }: { code: string; identity: ParticipantIde
   });
   const [actionError, setActionError] = useState<string | null>(null);
   const [pressed, setPressed] = useState(false);
+  const { play } = useFeedback();
+  const pantalla = useRef<HTMLElement>(null);
+  /** Ultima ronda ya festejada, para no repetir el confeti en cada repintado. */
+  const yaCelebrado = useRef<string | null>(null);
 
   const team = state?.teams.find((t) => t.id === identity.teamId) ?? null;
   const question = state?.question ?? null;
@@ -92,6 +97,23 @@ function BuzzerBody({ code, identity }: { code: string; identity: ParticipantIde
     const result = await buzz();
     if (!result.ok) setActionError(result.error);
   }, [buzz, canBuzz]);
+
+  /*
+   * Festejo y consuelo.
+   *
+   * Se dispara con `lastOutcome`, que viene del servidor, y no con el delta:
+   * una pregunta con penalizacion en cero deja delta 0 al fallar, que es
+   * indistinguible de no haber jugado. La clave incluye el numero de ronda
+   * para que el confeti salga una vez y no en cada tick del cronometro.
+   */
+  const outcome = team?.lastOutcome ?? null;
+  useEffect(() => {
+    if (!outcome || !state) return;
+    const ronda = `${state.questionIndex}:${outcome}`;
+    if (yaCelebrado.current === ronda) return;
+    yaCelebrado.current = ronda;
+    play(outcome, { target: pantalla.current });
+  }, [outcome, state, play]);
 
   // Enter / barra espaciadora en escritorio.
   useEffect(() => {
@@ -169,7 +191,7 @@ function BuzzerBody({ code, identity }: { code: string; identity: ParticipantIde
   const correctKey = state.phase === 'revealed' ? state.reveal?.correctOptionKey : null;
 
   return (
-    <main className="pb-barra-navegador flex min-h-dvh flex-col bg-surface">
+    <main ref={pantalla} className="pb-barra-navegador flex min-h-dvh flex-col bg-surface">
       {/* -------- Encabezado compacto -------- */}
       <header className="flex items-center gap-2 border-b-[1.5px] border-outline-variant bg-surface-lowest px-gutter-mobile py-2.5">
         <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-primary-container text-on-primary">

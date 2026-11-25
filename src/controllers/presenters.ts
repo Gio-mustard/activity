@@ -8,7 +8,15 @@
 import type { QuestionDoc } from '@/models/Activity';
 import type { ParticipantDoc } from '@/models/Participant';
 import type { TeamDoc } from '@/models/Team';
-import type { AdminQuestion, Difficulty, PublicQuestion, QuestionType, TeamMemberView, TeamView } from '@/lib/types';
+import type {
+  AdminQuestion,
+  Difficulty,
+  PublicQuestion,
+  QuestionType,
+  RoundOutcome,
+  TeamMemberView,
+  TeamView,
+} from '@/lib/types';
 import { optionsForQuestion } from './rules';
 
 export function toPublicQuestion(question: QuestionDoc, index: number): PublicQuestion {
@@ -56,6 +64,7 @@ export interface TeamViewExtras {
   answerKey?: string | null;
   answerMs?: number | null;
   lastDelta?: number | null;
+  lastOutcome?: RoundOutcome | null;
   /** El codigo de equipo solo se expone al admin y en la pantalla de ingreso. */
   includeJoinCode?: boolean;
 }
@@ -77,5 +86,6 @@ export function toTeamView(team: TeamDoc, members: ParticipantDoc[], extras: Tea
     answerMs: extras.answerMs ?? null,
     streak: team.streak,
     lastDelta: extras.lastDelta ?? null,
+    lastOutcome: extras.lastOutcome ?? null,
   };
 }

@@ -14,7 +14,7 @@ import { Activity, type ActivityDoc } from '@/models/Activity';
 import { Participant, type ParticipantDoc } from '@/models/Participant';
 import { Team, type TeamDoc } from '@/models/Team';
 import { normalizeCode } from '@/lib/codes';
-import type { BuzzEntry, LiveStateView, RoundPhase, TeamView, Verdict } from '@/lib/types';
+import type { BuzzEntry, LiveStateView, RoundOutcome, RoundPhase, TeamView, Verdict } from '@/lib/types';
 import { ControllerError } from './activityController';
 import { toAdminQuestion, toPublicQuestion, toTeamView } from './presenters';
 import {
@@ -64,6 +64,8 @@ export interface Room {
   lockedTeamIds: Set<string>;
   answers: Map<string, TeamAnswer>;
   lastDeltas: Map<string, number>;
+  /** Acierto o fallo de la ronda, para que el pulsador pueda festejar o sacudirse. */
+  lastOutcomes: Map<string, RoundOutcome>;
 
   podiumVisible: boolean;
   timer: NodeJS.Timeout | null;
@@ -142,6 +144,7 @@ export async function getRoom(rawCode: string): Promise<Room> {
     lockedTeamIds: new Set(),
     answers: new Map(),
     lastDeltas: new Map(),
+    lastOutcomes: new Map(),
     podiumVisible: activity.live.podiumVisible ?? false,
     timer: null,
     lastTickAt: Date.now(),
@@ -310,6 +313,7 @@ export async function goToQuestion(room: Room, index: number, options: GoOptions
   room.lockedTeamIds.clear();
   room.answers.clear();
   room.lastDeltas.clear();
+  room.lastOutcomes.clear();
   room.buzzOpenedAt = null;
   room.podiumVisible = false;
 
@@ -481,6 +485,8 @@ export async function verdict(room: Room, value: Verdict) {
   }
 
   room.lastDeltas.set(teamId, delta);
+  // Ceder el turno no es fallar: ahi no hay nada que festejar ni que lamentar.
+  if (value !== 'pass') room.lastOutcomes.set(teamId, value === 'correct' ? 'correct' : 'incorrect');
   if (shouldLockTeam(value, question)) room.lockedTeamIds.add(teamId);
   room.queue = room.queue.filter((q) => q.teamId !== teamId);
   await reloadTeams(room);
@@ -583,6 +589,7 @@ export async function revealQuestion(room: Room) {
       if (!team) continue;
       const { correct, delta } = gradeClosedAnswer(answer.optionKey, question.correctOptionKey, question);
       room.lastDeltas.set(teamId, delta);
+      room.lastOutcomes.set(teamId, correct ? 'correct' : 'incorrect');
       await applyDelta({
         activityId: room.activityId,
         teamId,
@@ -689,6 +696,7 @@ export async function finishActivityLive(room: Room) {
   room.lockedTeamIds.clear();
   room.answers.clear();
   room.lastDeltas.clear();
+  room.lastOutcomes.clear();
   room.buzzOpenedAt = null;
   room.podiumVisible = false;
   room.mainRemainingMs = 0;
@@ -726,6 +734,7 @@ function buildTeamViews(room: Room, audience: Audience): TeamView[] {
       answerKey: answer && canSeeAnswer ? answer.optionKey : null,
       answerMs: answer ? answer.reactionMs : null,
       lastDelta: room.lastDeltas.get(teamId) ?? null,
+      lastOutcome: room.lastOutcomes.get(teamId) ?? null,
       includeJoinCode: isAdmin,
     });
   });

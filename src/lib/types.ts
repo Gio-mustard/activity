@@ -10,6 +10,8 @@ export type QuestionType = 'open' | 'multiple' | 'boolean';
 export type Difficulty = 'baja' | 'media' | 'alta';
 export type ActivityStatus = 'draft' | 'live' | 'finished';
 export type Verdict = 'correct' | 'incorrect' | 'pass';
+/** Como le fue al equipo en la pregunta que acaba de cerrarse. */
+export type RoundOutcome = 'correct' | 'incorrect';
 export type Role = 'admin' | 'screen' | 'player';
 
 /**
@@ -80,6 +82,13 @@ export interface TeamView {
   answerMs: number | null;
   streak: number;
   lastDelta: number | null;
+  /*
+   * Resultado de la ronda, aparte del delta.
+   *
+   * Con penalizacion en cero un fallo deja delta 0, que es lo mismo que no
+   * haber jugado. El pulsador necesita distinguirlos para festejar o sacudir.
+   */
+  lastOutcome: RoundOutcome | null;
 }
 
 export interface BuzzEntry {
